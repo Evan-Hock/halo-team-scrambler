@@ -18,13 +18,27 @@
 <main id="app"></main>
 
 <script type="text/javascript">
+const alertDialog = document.getElementById("alert-dialog")
+const alertDialogTextContainer = alertDialog.querySelector("p")
+
+function showAlertDialog(msg) {
+    alertDialogTextContainer.textContent = msg
+    alertDialog.showModal()
+}
+
 const savedPlayersKey = "players"
 
 let savedPlayers
 try {
     const savedPlayersJson = localStorage.getItem(savedPlayersKey)
     savedPlayers = savedPlayersJson ? JSON.parse(savedPlayersJson) : []
-} catch (SyntaxError) {
+} catch (e) {
+    if (!(e instanceof SyntaxError)) {
+        throw e
+    }
+
+    showAlertDialog("There was an issue parsing the stored player data")
+    localStorage.clear()
     savedPlayers = []
 }
 
@@ -33,13 +47,9 @@ const app = Elm.Main.init({
     flags: savedPlayers
 })
 
-const alertDialog = document.getElementById("alert-dialog")
-const alertDialogTextContainer = alertDialog.querySelector("p")
 
-app.ports.alert.subscribe(msg => {
-    alertDialogTextContainer.textContent = msg
-    alertDialog.showModal()
-})
+
+app.ports.alert.subscribe(showAlertDialog)
 
 app.ports.savePlayers.subscribe(players => {
     localStorage.setItem(savedPlayersKey, JSON.stringify(players))
