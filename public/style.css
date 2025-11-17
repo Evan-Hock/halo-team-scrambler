@@ -1,0 +1,89 @@
+@import "josh-reset.css";
+
+:root {
+    --background-color: #222;
+    --border-radius: 12px;
+    --color: #eee;
+    --opacity: 90%;
+}
+
+body {
+    background-image: url("halo-pacific-northwest.png");
+    background-size: 1920px 1080px;
+}
+
+main {
+    max-width: 800px;
+    margin-top: 200px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: var(--background-color);
+    color: var(--color);
+    border-radius: var(--border-radius);
+    padding: 12px;
+    opacity: var(--opacity);
+}
+
+form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+input {
+    margin: 4px;
+}
+
+button {
+    margin: 4px;
+}
+
+dialog {
+    margin: auto;
+    border-radius: var(--border-radius);
+    background-color: var(--background-color);
+    border: none;
+    color: var(--color);
+}
+
+.player {
+    border: 2px solid var(--color);
+    margin: 8px;
+    padding: 8px;
+}
+
+.red {
+    --color: #ae0d0d;
+}
+
+.blue {
+    --color: #0a2994;
+}
+
+.green {
+    --color: #1a6e1a;
+}
+
+.orange {
+    --color: #a63603;
+}
+
+.purple {
+    --color: #57107e;
+}
+
+.gold {
+    --color: #efcb13;
+}
+
+.brown {
+    --color: #5d321b;
+}
+
+.pink {
+    --color: #ef8ed1;
+}
+
+.unassigned {
+    --color: white;
+}

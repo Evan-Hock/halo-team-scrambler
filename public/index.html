@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Halo Team Scrambler</title>
+    <link rel="icon" href="favicon.ico" type="image/png">
+    <link rel="stylesheet" href="style.css" type="text/css">
+    <script charset="utf8" src="elm.js" type="text/javascript"></script>
+</head>
+
+<body>
+
+<dialog id="alert-dialog">
+    <p></p>
+    <button autofocus commandfor="alert-dialog" command="close">Ok</button>
+</dialog>
+
+<main id="app"></main>
+
+<script type="text/javascript">
+const savedPlayersKey = "players"
+
+let savedPlayers
+try {
+    const savedPlayersJson = localStorage.getItem(savedPlayersKey)
+    savedPlayers = savedPlayersJson ? JSON.parse(savedPlayersJson) : []
+} catch (SyntaxError) {
+    savedPlayers = []
+}
+
+const app = Elm.Main.init({
+    node: document.getElementById("app"),
+    flags: savedPlayers
+})
+
+const alertDialog = document.getElementById("alert-dialog")
+const alertDialogTextContainer = alertDialog.querySelector("p")
+
+app.ports.alert.subscribe(msg => {
+    alertDialogTextContainer.textContent = msg
+    alertDialog.showModal()
+})
+
+app.ports.savePlayers.subscribe(players => {
+    localStorage.setItem(savedPlayersKey, JSON.stringify(players))
+})
+
+app.ports.clearLocalStorage.subscribe(() => {
+    localStorage.clear()
+})
+</script>
+</body>
+
+</html>

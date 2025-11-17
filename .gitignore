@@ -1,0 +1,4 @@
+# Build products
+/public/*.js
+
+/elm-stuff/
