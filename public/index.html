@@ -47,8 +47,6 @@ const app = Elm.Main.init({
     flags: savedPlayers
 })
 
-
-
 app.ports.alert.subscribe(showAlertDialog)
 
 app.ports.savePlayers.subscribe(players => {
