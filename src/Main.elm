@@ -8,7 +8,7 @@ import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Json.Decode as Decode
+import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 import Random
 
@@ -57,11 +57,18 @@ initModel =
     }
 
 
+savedLocalStorageDecoder : Decoder { players : Array Player }
+savedLocalStorageDecoder =
+    Decode.map ( \ players -> { players = players } )
+        (Decode.field "savedPlayers"
+            (Decode.array Player.decoder))
+
+
 init : Flags -> ( Model, Cmd Msg )
-init localStoragePlayers =
-    case Decode.decodeValue (Decode.array Player.decoder) localStoragePlayers of
-        Ok players ->
-            ( { initModel | players = players }, Cmd.none )
+init savedLocalStorage =
+    case Decode.decodeValue savedLocalStorageDecoder savedLocalStorage of
+        Ok savedLocalStorageDecoded ->
+            ( { initModel | players = savedLocalStorageDecoded.players }, Cmd.none )
 
         Err e ->
             ( initModel, Cmd.batch [clearLocalStorage (), alert (Decode.errorToString e)])

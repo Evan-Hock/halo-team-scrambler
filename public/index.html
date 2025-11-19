@@ -26,25 +26,35 @@ function showAlertDialog(msg) {
     alertDialog.showModal()
 }
 
-const savedPlayersKey = "savedPlayers"
+function reconstructSavedLocalStorage(items) {
+    const r = {}
+    for (const item in items) {
+        try {
+            const savedJson = localStorage.getItem(item)
+            r[item] = savedJson ? items[item].deserialize(savedJson) : items[item].default
+        } catch (e) {
+            if (!(e instanceof SyntaxError)) {
+                throw e
+            }
 
-let savedPlayers
-try {
-    const savedPlayersJson = localStorage.getItem(savedPlayersKey)
-    savedPlayers = savedPlayersJson ? JSON.parse(savedPlayersJson) : []
-} catch (e) {
-    if (!(e instanceof SyntaxError)) {
-        throw e
+            localStorage.removeItem(item)
+            r[item] = items[item].default
+        }
     }
 
-    showAlertDialog("There was an issue parsing the stored player data")
-    localStorage.removeItem(savedPlayersKey)
-    savedPlayers = []
+    return r
 }
+
+const savedPlayersKey = "savedPlayers"
 
 const app = Elm.Main.init({
     node: document.getElementById("app"),
-    flags: savedPlayers
+    flags: reconstructSavedLocalStorage({
+        [savedPlayersKey]: {
+            default: [],
+            deserialize: JSON.parse
+        }
+    })
 })
 
 app.ports.alert.subscribe(showAlertDialog)
