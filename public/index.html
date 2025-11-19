@@ -35,7 +35,7 @@ function showAlertDialog(msg) {
     }
 }
 
-const savedPlayersKey = "players"
+const savedPlayersKey = "savedPlayers"
 
 let savedPlayers
 try {
@@ -47,7 +47,7 @@ try {
     }
 
     showAlertDialog("There was an issue parsing the stored player data")
-    localStorage.clear()
+    localStorage.removeItem(savedPlayersKey)
     savedPlayers = []
 }
 
