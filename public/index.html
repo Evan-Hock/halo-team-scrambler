@@ -22,17 +22,8 @@ const alertDialog = document.getElementById("alert-dialog")
 const alertDialogTextContainer = alertDialog.querySelector("p")
 
 function showAlertDialog(msg) {
-    if (!alertDialog.open) {
-        alertDialogTextContainer.textContent = msg
-        alertDialog.showModal()
-    } else {
-        const alertOnClose = () => {
-            alertDialog.removeEventListener("close", alertOnClose)
-            showAlertDialog(msg)
-        }
-
-        alertDialog.addEventListener("close", alertOnClose)
-    }
+    alertDialogTextContainer.textContent = msg
+    alertDialog.showModal()
 }
 
 const savedPlayersKey = "savedPlayers"
