@@ -59,7 +59,7 @@ initModel =
 
 savedLocalStorageDecoder : Decoder { players : Array Player }
 savedLocalStorageDecoder =
-    Decode.map (\ players -> { players = players } )
+    Decode.map (\ players -> { players = players })
         (Decode.field "savedPlayers"
             (Decode.array Player.decoder))
 
