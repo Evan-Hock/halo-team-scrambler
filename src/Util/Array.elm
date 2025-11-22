@@ -21,8 +21,11 @@ shuffle a =
 
 
 splice : Int -> Int -> Array a -> Array a -> Array a
-splice index deleteCount toInsert xs =
-    Array.append (Array.append (Array.slice 0 index xs) toInsert) (Array.slice (index + deleteCount) (Array.length xs) xs)
+splice index deleteCount toInsert arr =
+    List.foldl (\ xs ys -> Array.append ys xs) (Array.slice 0 index arr)
+        [ toInsert
+        , Array.slice (index + deleteCount) (Array.length arr) arr
+        ]
 
 
 shuffleLoop : Array a -> Int -> Random.Generator (Array a)
