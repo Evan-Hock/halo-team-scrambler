@@ -1,12 +1,13 @@
 port module Main exposing (main)
 
 import Player exposing (Player)
-import Util exposing (..)
+import Util
 
 import Array exposing (Array)
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Keyed as Keyed
 import Html.Events exposing (..)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
@@ -19,7 +20,7 @@ port clearLocalStorage : () -> Cmd msg
 
 
 type alias Flags =
-    Encode.Value
+    ()
 
 
 type alias Model =
@@ -34,7 +35,7 @@ type Msg
     | ChangeTeamCountInput String
     | AddNewPlayer
     | AssignTeams
-    | PlayersShuffled (Array Player)
+    | AssignTeams0 (Array Int)
     | ClearPlayers
     | RemovePlayer Int
 
@@ -57,21 +58,9 @@ initModel =
     }
 
 
-savedLocalStorageDecoder : Decoder { players : Array Player }
-savedLocalStorageDecoder =
-    Decode.map (\ players -> { players = players })
-        (Decode.field "savedPlayers"
-            (Decode.array Player.decoder))
-
-
 init : Flags -> ( Model, Cmd Msg )
-init savedLocalStorage =
-    case Decode.decodeValue savedLocalStorageDecoder savedLocalStorage of
-        Ok savedLocalStorageDecoded ->
-            ( { initModel | players = savedLocalStorageDecoded.players }, Cmd.none )
-
-        Err e ->
-            ( initModel, Cmd.batch [clearLocalStorage (), alert (Decode.errorToString e)])
+init () =
+    ( initModel, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -82,7 +71,14 @@ update msg model =
 
         AddNewPlayer ->
             if not (String.isEmpty model.newPlayerInput) then
-                updatePlayers (Array.push (Player.Unassigned model.newPlayerInput) model.players) { model | newPlayerInput = "" }
+                let
+                    newPlayer =
+                        { id = Array.length model.players
+                        , name = model.newPlayerInput
+                        , team = Nothing
+                        }
+                in
+                    updatePlayers (Array.push newPlayer model.players) { model | newPlayerInput = "" }
             else
                 ( model, Cmd.none )
 
@@ -90,26 +86,39 @@ update msg model =
             ( { model | teamCountInput = newValue }, Cmd.none )
 
         AssignTeams ->
-            ( model, Random.generate PlayersShuffled (shuffle model.players) )
+            ( model
+            , Random.generate AssignTeams0
+                (Util.shuffle (Array.initialize (Array.length model.players) identity))
+            )
 
-        PlayersShuffled shuffled ->
-            assignTeams shuffled model
+        AssignTeams0 shuffledIndices ->
+            assignTeams (Array.toList shuffledIndices) model
 
         ClearPlayers ->
             updatePlayers Array.empty model
 
         RemovePlayer i ->
-            updatePlayers (Array.append (Array.slice 0 i model.players) (Array.slice (i + 1) (Array.length model.players) model.players)) model
+            updatePlayers (Util.splice i 1 Array.empty model.players) model
 
 
 updatePlayers : Array Player -> Model -> ( Model, Cmd Msg )
 updatePlayers newPlayers model =
-    ( { model | players = newPlayers }, savePlayers (Encode.array Player.encoder newPlayers) )
+    ( { model | players = newPlayers }, Cmd.none )
 
 
 defaultTeamCount : String
 defaultTeamCount =
     "2"
+
+
+nAllTeams : Int
+nAllTeams =
+    List.length teams
+
+
+nAllTeamsStr : String
+nAllTeamsStr =
+    String.fromInt nAllTeams
 
 
 teams : List String
@@ -125,13 +134,8 @@ teams =
     ]
 
 
-nAllTeams : String
-nAllTeams =
-    String.fromInt (List.length teams)
-
-
-assignTeams : Array Player -> Model -> ( Model, Cmd Msg )
-assignTeams shuffled model =
+assignTeams : List Int -> Model -> ( Model, Cmd Msg )
+assignTeams assignmentOrder model =
     case String.toInt model.teamCountInput of
         Nothing ->
             ( model, alert "Number of teams must be a string." )
@@ -142,23 +146,23 @@ assignTeams shuffled model =
                 , alert
                 ("Number of teams must be greater than or equal to "
                     ++ defaultTeamCount ++ " and less than or equal to "
-                    ++ nAllTeams ++ ".")
+                    ++ nAllTeamsStr ++ ".")
                 )
             else
             let
                 nPlayers =
-                    Array.length shuffled
+                    Array.length model.players
             in
                 if nTeams > nPlayers then
                     ( model
                     , alert "Number of teams must be less than or equal to the number of players."
                     )
                 else
-                    doAssignTeams nPlayers nTeams shuffled model
+                    doAssignTeams nPlayers nTeams assignmentOrder model
 
 
-doAssignTeams : Int -> Int -> Array Player -> Model -> ( Model, Cmd Msg )
-doAssignTeams nPlayers nTeams shuffled model =
+doAssignTeams : Int -> Int -> List Int -> Model -> ( Model, Cmd Msg )
+doAssignTeams nPlayers nTeams assignmentOrder model =
     let
         idealTeamSize =
             nPlayers // nTeams
@@ -167,28 +171,34 @@ doAssignTeams nPlayers nTeams shuffled model =
             nPlayers
             |> modBy nTeams
 
-        assignments =
+        indexAssignments =
             -- Figure out each team size
             List.map2 Tuple.pair
-                teams (List.repeat nResiduals (idealTeamSize + 1) ++ List.repeat (nPlayers - (nResiduals * (idealTeamSize + 1))) idealTeamSize)
+                teams
+                (List.repeat nResiduals (idealTeamSize + 1)
+                ++ List.repeat (nTeams - nResiduals) idealTeamSize)
+
             -- Expand the assignments
-            |> List.concatMap (\ ( team, nAssignments ) ->
-                List.repeat nAssignments team)
+            |> List.concatMap (\ ( team, nAssignments ) -> List.repeat nAssignments team)
 
             -- Assign the players
-            |> List.map2 (\ player team ->
-                case player of
-                    Player.Unassigned name ->
-                        Player.Assigned name team
+            |> List.map2 Tuple.pair assignmentOrder
 
-                    Player.Assigned name _ ->
-                        Player.Assigned name team)
-
-                (Array.toList shuffled)
-
-            |> Array.fromList
+        assignments =
+            List.foldl (\ ( i, team ) players -> assignPlayer i team players)
+                model.players indexAssignments
     in
         updatePlayers assignments model
+
+
+assignPlayer : Int -> String -> Array Player -> Array Player
+assignPlayer i newTeam players =
+    case Array.get i players of
+        Nothing ->
+            players
+
+        Just player ->
+            Array.set i { player | team = Just newTeam } players
 
 
 view : Model -> Html Msg
@@ -202,7 +212,7 @@ view model =
             , button [type_ "submit"] [text "Add"]
             , button [type_ "button", onClick ClearPlayers] [text "Clear"]
             ]
-        , div [] (List.indexedMap playerView (Array.toList model.players))
+        , Keyed.node "div" [] (List.indexedMap playerView (Array.toList model.players))
         , Html.form [onSubmit AssignTeams]
             [ label []
                 [ text "Number of Teams"
@@ -211,7 +221,7 @@ view model =
                 , onInput ChangeTeamCountInput
                 , type_ "number"
                 , Html.Attributes.min defaultTeamCount
-                , Html.Attributes.max nAllTeams
+                , Html.Attributes.max nAllTeamsStr
                 ]
                 []
             ]
@@ -225,24 +235,19 @@ onRightClick msg =
     preventDefaultOn "contextmenu" (Decode.succeed ( msg, True ))
 
 
-basePlayerView : Int -> String -> String -> Html Msg
-basePlayerView i name team =
+basePlayerView : Int -> Player -> Html Msg
+basePlayerView i player =
     div
         [ class "player"
-        , class team
+        , class (Maybe.withDefault "unassigned" player.team)
         , onRightClick (RemovePlayer i)
         ]
-        [text name]
+        [text player.name]
 
 
-playerView : Int -> Player -> Html Msg
+playerView : Int -> Player -> ( String, Html Msg )
 playerView i player =
-    case player of
-        Player.Unassigned name ->
-            basePlayerView i name "unassigned"
-
-        Player.Assigned name team ->
-            basePlayerView i name team
+    ( String.fromInt player.id, basePlayerView i player )
 
 
 subscriptions : Model -> Sub Msg

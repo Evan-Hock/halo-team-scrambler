@@ -1,34 +1,35 @@
-module Player exposing (Player(..), decoder, encoder)
+module Player exposing (Player, decoder, encoder)
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 
-type Player
-    = Unassigned String
-    | Assigned String String
+type alias Player =
+    { id : Int
+    , name : String
+    , team : Maybe String
+    }
 
 
 decoder : Decoder Player
 decoder =
-    Decode.map2 ( \ name mTeam ->
-        case mTeam of
-            Nothing ->
-                Unassigned name
-                
-            Just team ->
-                Assigned name team)
+    Decode.map3 Player
+        (Decode.field "id" Decode.int)
         (Decode.field "name" Decode.string)
-        (Decode.maybe (Decode.field "team" Decode.string))
+        (Decode.field "team" (Decode.nullable Decode.string))
 
 
 encoder : Player -> Encode.Value
 encoder player =
-    case player of
-        Unassigned name ->
-            Encode.object [( "name", Encode.string name )]
-        
-        Assigned name team ->
-            Encode.object
-                [ ( "name", Encode.string name )
-                , ( "team", Encode.string team )
-                ]
+    Encode.object
+        [ ( "id", Encode.int player.id )
+        , ( "name", Encode.string player.name )
+        ,
+            ( "team"
+            , case player.team of
+                Just team ->
+                    Encode.string team
+                
+                Nothing ->
+                    Encode.null
+            )
+        ]

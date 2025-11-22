@@ -26,46 +26,11 @@ function showAlertDialog(msg) {
     alertDialog.showModal()
 }
 
-function reconstructSavedLocalStorage(items) {
-    const r = {}
-    for (const item in items) {
-        try {
-            const savedJson = localStorage.getItem(item)
-            r[item] = savedJson ? items[item].deserialize(savedJson) : items[item].default
-        } catch (e) {
-            if (!(e instanceof SyntaxError)) {
-                throw e
-            }
-
-            localStorage.removeItem(item)
-            r[item] = items[item].default
-        }
-    }
-
-    return r
-}
-
-const savedPlayersKey = "savedPlayers"
-
 const app = Elm.Main.init({
-    node: document.getElementById("app"),
-    flags: reconstructSavedLocalStorage({
-        [savedPlayersKey]: {
-            default: [],
-            deserialize: JSON.parse
-        }
-    })
+    node: document.getElementById("app")
 })
 
 app.ports.alert.subscribe(showAlertDialog)
-
-app.ports.savePlayers.subscribe(players => {
-    localStorage.setItem(savedPlayersKey, JSON.stringify(players))
-})
-
-app.ports.clearLocalStorage.subscribe(() => {
-    localStorage.clear()
-})
 </script>
 
 </body>
