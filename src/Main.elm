@@ -26,6 +26,7 @@ type alias Model =
     { newPlayerInput : String
     , teamCountInput : String
     , players : Array Player
+    , activePlayer : Maybe Int
     }
 
 
@@ -54,6 +55,7 @@ initModel =
     { newPlayerInput = ""
     , teamCountInput = defaultTeamCount
     , players = Array.empty
+    , activePlayer = Nothing
     }
 
 
@@ -171,16 +173,11 @@ doAssignTeams nPlayers nTeams assignmentOrder model =
             |> modBy nTeams
 
         indexAssignments =
-            -- Figure out each team size
             List.map2 Tuple.pair
                 teams
                 (List.repeat nResiduals (idealTeamSize + 1)
                 ++ List.repeat (nTeams - nResiduals) idealTeamSize)
-
-            -- Expand the assignments
             |> List.concatMap (\ ( team, nAssignments ) -> List.repeat nAssignments team)
-
-            -- Assign the players
             |> List.map2 Tuple.pair assignmentOrder
 
         assignments =
