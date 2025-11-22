@@ -16,8 +16,6 @@ import Random
 
 
 port alert : String -> Cmd msg
-port savePlayers : Encode.Value -> Cmd msg
-port clearLocalStorage : () -> Cmd msg
 
 
 type alias Flags =
