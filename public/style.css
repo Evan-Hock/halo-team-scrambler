@@ -47,6 +47,8 @@ dialog {
 }
 
 .player {
+    display: flex;
+    justify-content: space-between;
     border: 2px solid var(--color);
     margin: 8px;
     padding: 8px;

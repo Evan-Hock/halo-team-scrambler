@@ -1,7 +1,8 @@
 port module Main exposing (main)
 
 import Player exposing (Player)
-import Util
+import Util.Array
+import Util.String
 
 import Array exposing (Array)
 import Browser
@@ -88,7 +89,7 @@ update msg model =
         AssignTeams ->
             ( model
             , Random.generate AssignTeams0
-                (Util.shuffle (Array.initialize (Array.length model.players) identity))
+                (Util.Array.shuffle (Array.initialize (Array.length model.players) identity))
             )
 
         AssignTeams0 shuffledIndices ->
@@ -98,7 +99,7 @@ update msg model =
             updatePlayers Array.empty model
 
         RemovePlayer i ->
-            updatePlayers (Util.splice i 1 Array.empty model.players) model
+            updatePlayers (Util.Array.splice i 1 Array.empty model.players) model
 
 
 updatePlayers : Array Player -> Model -> ( Model, Cmd Msg )
@@ -242,7 +243,12 @@ basePlayerView i player =
         , class (Maybe.withDefault "unassigned" player.team)
         , onRightClick (RemovePlayer i)
         ]
-        [text player.name]
+        (span [] [text player.name]
+        :: case player.team of
+            Nothing ->
+                []
+            Just team ->
+                [span [] [text (Util.String.toTitle team)]])
 
 
 playerView : Int -> Player -> ( String, Html Msg )

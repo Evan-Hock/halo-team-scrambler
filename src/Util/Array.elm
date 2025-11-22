@@ -1,4 +1,4 @@
-module Util exposing (swap, shuffle, splice)
+module Util.Array exposing (swap, shuffle, splice)
 
 import Random
 import Array exposing (Array)
