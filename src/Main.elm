@@ -143,7 +143,7 @@ assignTeams assignmentOrder model =
             if nTeams < 2 || nTeams > List.length teams then
                 ( model
                 , alert
-                ("Number of teams must be greater than or equal to "
+                    ("Number of teams must be greater than or equal to "
                     ++ defaultTeamCount ++ " and less than or equal to "
                     ++ nAllTeamsStr ++ ".")
                 )
