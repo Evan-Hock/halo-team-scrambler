@@ -15,17 +15,17 @@ swap i j xs =
     |> Maybe.withDefault xs
 
 
-shuffle : Array a -> Random.Generator (Array a)
-shuffle a =
-    shuffleLoop a (Array.length a)
-
-
 splice : Int -> Int -> Array a -> Array a -> Array a
 splice index deleteCount toInsert arr =
     List.foldl (\ xs ys -> Array.append ys xs) (Array.slice 0 index arr)
         [ toInsert
         , Array.slice (index + deleteCount) (Array.length arr) arr
         ]
+
+
+shuffle : Array a -> Random.Generator (Array a)
+shuffle a =
+    shuffleLoop a (Array.length a)
 
 
 shuffleLoop : Array a -> Int -> Random.Generator (Array a)
